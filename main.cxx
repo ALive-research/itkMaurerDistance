@@ -7,6 +7,7 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkSignedMaurerDistanceMapImageFilter.h>
+#include <itkRealTimeClock.h>
 
 // STD includes
 #include <cstdlib>
@@ -67,8 +68,14 @@ int main(int argc, char **argv)
   // =========================================================================
   // Apply the Maurer distance
   // =========================================================================
+  auto realTimeClock = itk::RealTimeClock::New();
   auto maurer = SignedMaurerDistanceMapImageFilterType::New();
   maurer->SetInput(reader->GetOutput());
+  auto start = realTimeClock->GetRealTimeStamp();
+  maurer->Update();
+  auto end = realTimeClock->GetRealTimeStamp();
+
+  std::cout << "Time (ms):" << (end - start).GetTimeInMilliSeconds() << std::endl;
 
   // =========================================================================
   // Output writing
@@ -79,7 +86,6 @@ int main(int argc, char **argv)
 
   try
   {
-    maurer->Update();
     writer->Update();
   }
   catch (const itk::ExceptionObject & excp)
