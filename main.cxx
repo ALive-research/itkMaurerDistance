@@ -23,6 +23,7 @@ int main(int argc, char **argv)
   // =========================================================================
   std::string input;
   std::string output;
+  bool compressOutput;
 
   // =========================================================================
   // Parse arguments
@@ -33,14 +34,17 @@ int main(int argc, char **argv)
 
     TCLAP::ValueArg<std::string> inputArgument("i", "input", "Input file", true, "None", "string");
     TCLAP::ValueArg<std::string> outputArgument("o", "output", "Output file", true, "None", "string");
+    TCLAP::SwitchArg compress("c", "compress", "Compress output", false);
 
     cmd.add(inputArgument);
     cmd.add(outputArgument);
+    cmd.add(compress);
 
     cmd.parse(argc,argv);
 
     input =  inputArgument.getValue();
     output = outputArgument.getValue();
+    compressOutput = compress.getValue();
 
     }
   catch(TCLAP::ArgException &e)
@@ -55,8 +59,7 @@ int main(int argc, char **argv)
   using LabelReaderType = itk::ImageFileReader<LabelImageType>;
   using DistanceImageType = itk::Image<float, 3>;
   using DistanceWriterType = itk::ImageFileWriter<DistanceImageType>;
-  using SignedMaurerDistanceMapImageFilterType =
-      itk::SignedMaurerDistanceMapImageFilter<LabelImageType, DistanceImageType>;
+  using SignedMaurerDistanceMapImageFilterType = itk::SignedMaurerDistanceMapImageFilter<LabelImageType, DistanceImageType>;
 
   // =========================================================================
   // Read the labelmap image
@@ -82,10 +85,12 @@ int main(int argc, char **argv)
   // =========================================================================
   auto writer = DistanceWriterType::New();
   writer->SetFileName(output);
+  writer->SetUseCompression(compressOutput);
   writer->SetInput(maurer->GetOutput());
 
   try
   {
+    maurer->Update();
     writer->Update();
   }
   catch (const itk::ExceptionObject & excp)
